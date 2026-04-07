@@ -10,12 +10,19 @@ int main(int argn, char **args)
 
         MPI_Init(&argn,&args); // inicializar el entorno de mpi
 
-        MPI_Comm_rank(MPI_COMM_WORLD, &rank); // numero de proceo
+        MPI_Barrier(MPI_COMM_WORLD);
+
+        MPI_Comm_rank(MPI_COMM_WORLD, &rank); // numero de proceso
         MPI_Comm_size(MPI_COMM_WORLD, &size); // numero total de procesos
 
         MPI_Get_processor_name(hostname, &len); // recuperar nombre del proceso
 
-        printf("Hola mundo soy el proceso %i de %i en %s\n", rank, size, hostname);
+        MPI_Barrier(MPI_COMM_WORLD);
+        
+        int result = rank*rank;
+        printf("Hola mundo soy el proceso %i de %i en %s y mi resultado es: %i\n", rank, size, hostname, result);
+
+        MPI_Barrier(MPI_COMM_WORLD);
 
         MPI_Finalize(); // finalizar el entorno de mpi
 
