@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <mpi.h>
 #include "myvar.h"
+#include "Timming.h"
 
 double f(double x){
   return x*x;
@@ -20,6 +21,10 @@ int main(int argn, char **argc){
   int data;
   double a,b,dx,sum,F;
   MPI_myvar range;
+
+  double utime0, stime0, wtime0;
+  double utime1, stime1, wtime1;
+  double utime2, stime2, wtime2;
   
   MPI_Init(&argn, &argc); /* Inicializar MPI */
   MPI_Comm_rank(MPI_COMM_WORLD,&miproc); /* Determinar el rango del proceso invocado*/
@@ -45,6 +50,7 @@ int main(int argn, char **argc){
       return 0;
     }
     printf("[%lf, %lf] dx=%lf\n",a,b,dx);
+    uswtime(&utime2, &stime2, &wtime2);
   } //master reading command line
 
   MPI_Barrier (MPI_COMM_WORLD);
@@ -103,7 +109,19 @@ int main(int argn, char **argc){
 	printf("F=%le\n",sum);
 	break;
       }
-    } //while(1)      
+    } //while(1)   
+  
+    uswtime(&utime0, &stime0, &wtime0);
+
+    printf("\nBenchmarks (sec):\n"); 
+	  printf("real %.3f\n", wtime0 - wtime2); 
+	  printf("user %.3f\n", utime0 - utime2); 
+	  printf("sys %.3f\n", stime0 - stime2); 
+	  printf("\n"); 
+	  printf("CPU/Wall %.3f %% \n",
+	         100.0 * (utime0 - utime2 + stime0 - stime2) / (wtime0 - wtime2));
+	  printf("\n");
+
   }//Master
 
    MPI_Abort(MPI_COMM_WORLD,MPI_SUCCESS);
