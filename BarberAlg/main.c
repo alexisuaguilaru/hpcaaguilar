@@ -69,6 +69,8 @@ int main(int argn, char **argc){
       MPI_Recv(&range, sizeof(range), MPI_CHARACTER, 0, 0, MPI_COMM_WORLD, &status);
       //integral de Riemman
       dx_proc = range.dx/1e6;
+      x_proc = range.a;
+      n = 0;
       range.F = 0;
       do 
       {
