@@ -2,7 +2,6 @@
 // by vdelaluz@enesmorelia.unam.mx
 // GNU/GPL License
 // 20230512
-// source code: https://github.com/itztli/hpc-2024-2
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -18,14 +17,16 @@ double f(double x){
 int main(int argn, char **argc){
   int miproc, numproc;    
   MPI_Status status;
-  int data, n;
+  int data;
   double a,b,dx,sum,F;
-  double x_proc, dx_proc;
+  double dx_proc,x_proc;
+  int n;
   MPI_myvar range;
 
-  double utime0, stime0, wtime0;
-  double utime1, stime1, wtime1;
-  double utime2, stime2, wtime2;
+  double utime0, stime0, wtime0,
+    utime1, stime1, wtime1,
+    utime2, stime2, wtime2;
+
   
   MPI_Init(&argn, &argc); /* Inicializar MPI */
   MPI_Comm_rank(MPI_COMM_WORLD,&miproc); /* Determinar el rango del proceso invocado*/
@@ -51,7 +52,9 @@ int main(int argn, char **argc){
       return 0;
     }
     printf("[%lf, %lf] dx=%lf\n",a,b,dx);
-    uswtime(&utime2, &stime2, &wtime2);
+
+    uswtime(&utime2, &stime2, &wtime2); //tomando el tiempo  
+
   } //master reading command line
 
   MPI_Barrier (MPI_COMM_WORLD);
@@ -65,28 +68,26 @@ int main(int argn, char **argc){
     range.F = 0.0;
     
     while(1){
-    MPI_Send(&range, sizeof(range), MPI_CHARACTER, 0, 0, MPI_COMM_WORLD); 
+      MPI_Send(&range, sizeof(range), MPI_CHARACTER, 0, 0, MPI_COMM_WORLD); 
       MPI_Recv(&range, sizeof(range), MPI_CHARACTER, 0, 0, MPI_COMM_WORLD, &status);
       //integral de Riemman
       dx_proc = range.dx/1e6;
       x_proc = range.a;
       n = 0;
-      range.F = 0;
-      do 
-      {
-        x_proc = x_proc + n*dx_proc;
-        F += f(x_proc)*dx_proc;
-        range.F += F;
+      range.F = 0.0;
+      do{
+        x_proc = range.a + n*dx_proc;
         n++;
+        F = f(x_proc)*dx_proc;  
+        range.F += F;
       }while(x_proc < range.b);
-
-      F = f(range.a)*range.dx;
-      range.F = F;
+      //F = f(range.a)*range.dx;
+      //range.F = F;
       //printf("%i:[%lf,%lf] dx=%lf F=%lf\n",miproc,range.a,range.b,range.dx,range.F);
       //Parallel processing
     }
 
-  }else{ //Master
+  }else{ //Master ORQUESTADOR
     int flag = -1;
     MPI_Request request;
     double sum = 0;
@@ -122,19 +123,19 @@ int main(int argn, char **argc){
 	printf("F=%le\n",sum);
 	break;
       }
-    } //while(1)   
-  
-    uswtime(&utime0, &stime0, &wtime0);
+    } //while(1)
+
+    uswtime(&utime0, &stime0, &wtime0); //tomando el tiempo  
 
     printf("\nBenchmarks (sec):\n"); 
-	  printf("real %.3f\n", wtime0 - wtime2); 
-	  printf("user %.3f\n", utime0 - utime2); 
-	  printf("sys %.3f\n", stime0 - stime2); 
-	  printf("\n"); 
-	  printf("CPU/Wall %.3f %% \n",
-	         100.0 * (utime0 - utime2 + stime0 - stime2) / (wtime0 - wtime2));
-	  printf("\n");
-
+    printf("real %.3f\n", wtime0 - wtime2); 
+    printf("user %.3f\n", utime0 - utime2); 
+    printf("sys %.3f\n", stime0 - stime2); 
+    printf("\n"); 
+    printf("CPU/Wall %.3f %% \n",
+	   100.0 * (utime0 - utime2 + stime0 - stime2) / (wtime0 - wtime2));
+    printf("\n");
+    
   }//Master
 
    MPI_Abort(MPI_COMM_WORLD,MPI_SUCCESS);
