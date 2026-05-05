@@ -18,8 +18,9 @@ double f(double x){
 int main(int argn, char **argc){
   int miproc, numproc;    
   MPI_Status status;
-  int data;
+  int data, n;
   double a,b,dx,sum,F;
+  double x_proc, dx_proc;
   MPI_myvar range;
 
   double utime0, stime0, wtime0;
@@ -67,6 +68,16 @@ int main(int argn, char **argc){
     MPI_Send(&range, sizeof(range), MPI_CHARACTER, 0, 0, MPI_COMM_WORLD); 
       MPI_Recv(&range, sizeof(range), MPI_CHARACTER, 0, 0, MPI_COMM_WORLD, &status);
       //integral de Riemman
+      dx_proc = range.dx/1e6;
+      range.F = 0;
+      do 
+      {
+        x_proc = x_proc + n*dx_proc;
+        F += f(x_proc)*dx_proc;
+        range.F += F;
+        n++;
+      }while(x_proc < range.b);
+
       F = f(range.a)*range.dx;
       range.F = F;
       //printf("%i:[%lf,%lf] dx=%lf F=%lf\n",miproc,range.a,range.b,range.dx,range.F);
